@@ -77,7 +77,7 @@ const TextStyle _kActionSheetContentStyle = TextStyle(
 );
 
 // Generic constants shared between Dialog and ActionSheet.
-const double _kBlurAmount = 20.0;
+const double _kBlurAmount = 30.0;
 const double _kCornerRadius = 14.0;
 const double _kDividerThickness = 0.3;
 
