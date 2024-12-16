@@ -64,7 +64,7 @@ void main() {
   }
 
   Finder findMenuPanel() {
-    return find.byType(RawMenuAnchor.debugMenuOverlayPanelType);
+    return find.byKey(RawMenuAnchor.debugMenuOverlayPanelKey);
   }
 
   Finder findOverlayContents() {
@@ -5654,7 +5654,7 @@ class NestedTag extends Tag {
     if (level == 0 || _prefix == null) {
       return _name;
     }
-    return '${_prefix!.text}.$_name';
+    return '${_prefix.text}.$_name';
   }
 
   @override
