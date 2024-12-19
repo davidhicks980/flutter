@@ -17,7 +17,7 @@ T findMenuPanelDescendent<T extends Widget>(WidgetTester tester) {
 }
 
 Finder findMenuPanel() {
-  return find.byType(RawMenuAnchor.debugMenuOverlayPanelType);
+  return find.byKey(RawMenuAnchor.debugMenuOverlayPanelKey);
 }
 
 void main() {
