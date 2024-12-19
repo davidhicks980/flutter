@@ -947,7 +947,7 @@ class _RawMenuAnchorOverlayState extends _RawMenuAnchorState<_RawMenuAnchorOverl
     }
 
     assert(_isRootAnchor);
-    return widget.useRootOverlay ?? false;
+    return widget.useRootOverlay;
   }
   Offset? _menuPosition;
   FocusNode? _menuFocusNode;

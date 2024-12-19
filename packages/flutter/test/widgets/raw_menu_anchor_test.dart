@@ -5654,7 +5654,7 @@ class NestedTag extends Tag {
     if (level == 0 || _prefix == null) {
       return _name;
     }
-    return '${_prefix!.text}.$_name';
+    return '${_prefix.text}.$_name';
   }
 
   @override
