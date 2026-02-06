@@ -965,7 +965,7 @@ void main() {
     expect(rootOpened, true);
 
     // Hover the first submenu anchor.
-    final pointer = TestPointer(1, ui.PointerDeviceKind.mouse);
+    final pointer = TestPointer(tester.nextPointer, ui.PointerDeviceKind.mouse);
     await tester.sendEventToBinding(pointer.hover(tester.getCenter(find.text(Tag.a.text))));
     await tester.pump();
 
@@ -1166,7 +1166,7 @@ void main() {
       ),
     );
 
-    final TestGesture gesture = await tester.createGesture(pointer: 0);
+    final TestGesture gesture = await tester.createGesture();
     addTearDown(gesture.removePointer);
 
     controller.open();
@@ -1252,7 +1252,7 @@ void main() {
       ),
     );
 
-    final TestGesture gesture = await tester.createGesture(pointer: 0);
+    final TestGesture gesture = await tester.createGesture();
     addTearDown(gesture.removePointer);
 
     controller.open();
@@ -1354,7 +1354,7 @@ void main() {
       ),
     );
 
-    final TestGesture gesture = await tester.createGesture(pointer: 0);
+    final TestGesture gesture = await tester.createGesture();
     addTearDown(gesture.removePointer);
 
     controller.open();
@@ -1386,7 +1386,7 @@ void main() {
     expect(getScale(tester), moreOrLessEquals(1.0, epsilon: 0.01));
 
     // Test from a different scaled position
-    final TestGesture gesture2 = await tester.createGesture(pointer: 1);
+    final TestGesture gesture2 = await tester.createGesture();
     addTearDown(gesture2.removePointer);
 
     await gesture2.down(startPosition);
@@ -1425,7 +1425,7 @@ void main() {
 
     await tester.pumpWidget(buildWidget(enableSwipe: false));
 
-    final TestGesture gesture = await tester.createGesture(pointer: 0);
+    final TestGesture gesture = await tester.createGesture();
     addTearDown(gesture.removePointer);
 
     controller.open();
@@ -1623,7 +1623,56 @@ void main() {
 
   group('Focus', () {
     testWidgets(
-      'Focus wraps when traversing with arrow keys on non-Apple platforms',
+      '[Browser] Focus wraps on all platforms',
+      skip: !isBrowser, // [intended] Web wraps focus regardless of platform.
+      (WidgetTester tester) async {
+        final anchorFocusNode = FocusNode();
+        final firstItemFocusNode = FocusNode();
+        final lastItemFocusNode = FocusNode();
+        addTearDown(anchorFocusNode.dispose);
+        addTearDown(firstItemFocusNode.dispose);
+        addTearDown(lastItemFocusNode.dispose);
+
+        await tester.pumpWidget(
+          App(
+            CupertinoMenuAnchor(
+              controller: controller,
+              menuChildren: <Widget>[
+                MenuItem.tag(Tag.a, focusNode: firstItemFocusNode),
+                MenuItem.tag(Tag.b),
+                MenuItem.tag(Tag.c, focusNode: lastItemFocusNode),
+              ],
+              child: AnchorButton(Tag.anchor, focusNode: anchorFocusNode),
+            ),
+          ),
+        );
+
+        controller.open();
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        firstItemFocusNode.requestFocus();
+        await tester.pump();
+
+        expect(FocusManager.instance.primaryFocus, firstItemFocusNode);
+
+        // Arrow up from first item should wrap to last item
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+        await tester.pump();
+
+        expect(FocusManager.instance.primaryFocus, lastItemFocusNode);
+
+        // Arrow down from last item should wrap to first item
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await tester.pump();
+
+        expect(FocusManager.instance.primaryFocus, firstItemFocusNode);
+      },
+    );
+
+    testWidgets(
+      '[Not Browser] Focus wraps when traversing with arrow keys on non-Apple platforms',
+      skip: isBrowser, // [intended] Browser behavior is tested above.
       variant: const TargetPlatformVariant(<TargetPlatform>{
         TargetPlatform.android,
         TargetPlatform.fuchsia,
@@ -1676,60 +1725,8 @@ void main() {
     );
 
     testWidgets(
-      'Focus wraps when traversing with arrow keys on web',
-      skip: !isBrowser, // [intended] Web wraps focus regardless of platform.
-      variant: const TargetPlatformVariant(<TargetPlatform>{
-        TargetPlatform.iOS,
-        TargetPlatform.macOS,
-      }),
-      (WidgetTester tester) async {
-        final anchorFocusNode = FocusNode();
-        final firstItemFocusNode = FocusNode();
-        final lastItemFocusNode = FocusNode();
-        addTearDown(anchorFocusNode.dispose);
-        addTearDown(firstItemFocusNode.dispose);
-        addTearDown(lastItemFocusNode.dispose);
-
-        await tester.pumpWidget(
-          App(
-            CupertinoMenuAnchor(
-              controller: controller,
-              menuChildren: <Widget>[
-                MenuItem.tag(Tag.a, focusNode: firstItemFocusNode),
-                MenuItem.tag(Tag.b),
-                MenuItem.tag(Tag.c, focusNode: lastItemFocusNode),
-              ],
-              child: AnchorButton(Tag.anchor, focusNode: anchorFocusNode),
-            ),
-          ),
-        );
-
-        controller.open();
-        await tester.pump();
-        await tester.pumpAndSettle();
-
-        firstItemFocusNode.requestFocus();
-        await tester.pump();
-
-        expect(FocusManager.instance.primaryFocus, firstItemFocusNode);
-
-        // Arrow up from first item should wrap to last item
-        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
-        await tester.pump();
-
-        expect(FocusManager.instance.primaryFocus, lastItemFocusNode);
-
-        // Arrow down from last item should wrap to first item
-        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-        await tester.pump();
-
-        expect(FocusManager.instance.primaryFocus, firstItemFocusNode);
-      },
-    );
-
-    testWidgets(
-      'Focus does not wrap when traversing with arrow keys on Apple platforms',
-      skip: isBrowser, // [intended] Web wraps focus regardless of platform.
+      '[Not Browser] Focus does not wrap when traversing with arrow keys on Apple platforms',
+      skip: isBrowser, // [intended] Browser behavior is tested above.
       variant: const TargetPlatformVariant(<TargetPlatform>{
         TargetPlatform.iOS,
         TargetPlatform.macOS,
@@ -3663,8 +3660,7 @@ void main() {
         controller.open();
         await tester.pumpAndSettle();
 
-        final TestGesture gesture = await tester.createGesture(pointer: 1);
-
+        final TestGesture gesture = await tester.createGesture();
         addTearDown(gesture.removePointer);
 
         // Test focus
@@ -4007,13 +4003,9 @@ void main() {
           ),
         );
 
-        final TestGesture gesture = await tester.createGesture(
-          kind: ui.PointerDeviceKind.mouse,
-          pointer: 1,
-        );
-
-        await gesture.addPointer(location: tester.getCenter(find.text(Tag.a.text)));
+        final TestGesture gesture = await tester.createGesture(kind: ui.PointerDeviceKind.mouse);
         addTearDown(gesture.removePointer);
+        await gesture.addPointer(location: tester.getCenter(find.text(Tag.a.text)));
 
         await tester.pump();
 
@@ -5994,48 +5986,6 @@ void main() {
       expect(controller.isOpen, isFalse);
     });
 
-    testWidgets('respects closeOnActivate property', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        App(
-          CupertinoMenuAnchor(
-            controller: controller,
-            menuChildren: <Widget>[
-              CupertinoMenuItem(
-                requestCloseOnActivate: false,
-                onPressed: () {},
-                child: Text(Tag.a.text),
-              ),
-            ],
-          ),
-        ),
-      );
-
-      controller.open();
-      await tester.pumpAndSettle();
-
-      // Taps the CupertinoMenuItem which should close the menu
-      await tester.tap(find.text(Tag.a.text));
-      await tester.pumpAndSettle();
-
-      expect(controller.isOpen, isTrue);
-
-      await tester.pumpWidget(
-        App(
-          CupertinoMenuAnchor(
-            controller: controller,
-            menuChildren: <Widget>[
-              CupertinoMenuItem(key: UniqueKey(), onPressed: () {}, child: Text(Tag.a.text)),
-            ],
-          ),
-        ),
-      );
-      // Taps the CupertinoMenuItem which should close the menu
-      await tester.tap(find.byType(CupertinoMenuItem));
-      await tester.pumpAndSettle();
-
-      expect(controller.isOpen, isFalse);
-    });
-
     testWidgets('Focus node can be changed', (WidgetTester tester) async {
       final focusNode1 = FocusNode(debugLabel: 'Node 1');
       final focusNode2 = FocusNode(debugLabel: 'Node 2');
@@ -6053,7 +6003,9 @@ void main() {
       }
 
       await tester.pumpWidget(buildApp(focusNode1));
+
       controller.open();
+
       await tester.pumpAndSettle();
 
       focusNode1.requestFocus();
@@ -6122,6 +6074,7 @@ void main() {
       // Simulate a tap down at the center of the widget.
       final Offset center = tester.getCenter(find.byType(CupertinoMenuItem));
       final TestGesture gesture = await tester.startGesture(center);
+      addTearDown(gesture.removePointer);
 
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));

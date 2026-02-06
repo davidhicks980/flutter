@@ -2499,6 +2499,10 @@ class _CupertinoMenuItemInteractionHandlerState extends State<_CupertinoMenuItem
 
   @override
   void didSwipeLeave({bool pointerUp = false}) {
+    if (!mounted) {
+      return;
+    }
+
     if (isEnabled && pointerUp) {
       _handleActivation();
     }
